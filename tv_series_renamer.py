@@ -25,7 +25,10 @@ TVMAZE_API_URL = "https://api.tvmaze.com"
 TMDB_API_URL = "https://api.themoviedb.org/3"
 
 # SQLite database setup
-DB_FILE = os.path.join(os.getenv("LOCALAPPDATA"), "TVSeriesRenamer", "cache.db")
+LOCALAPPDATA = os.getenv("LOCALAPPDATA")
+if LOCALAPPDATA is None:
+    raise ValueError("LOCALAPPDATA environment variable is not set")
+DB_FILE = os.path.join(LOCALAPPDATA, "TVSeriesRenamer", "cache.db")
 os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
 conn = sqlite3.connect(DB_FILE)
 cursor = conn.cursor()
@@ -239,9 +242,9 @@ class Renamizer(tk.Tk):
             print(f"No se pudo cargar el logo reducido: {e}")
             self.logo_app_img = None
         self.title("Renombrador de Series de TV para Plex")
-        self.geometry("1280x800")
-        self.minsize(1024, 768)
-        self.configure(bg="#f0f0f0")
+        self.geometry("1100x650")
+        self.minsize(900, 550)
+        self.configure(bg="#f7fafd")
         
         # Custom fonts
         self.title_font = Font(family="Segoe UI", size=12, weight="bold")
@@ -267,114 +270,113 @@ class Renamizer(tk.Tk):
 
     def configure_style(self):
         self.style.theme_use('clam')
-        
-        # Main colors
-        bg_color = "#f0f0f0"
+        # Colores modernos y suaves
+        bg_color = "#f7fafd"
         frame_bg = "#ffffff"
-        accent_color = "#4a6fa5"
-        hover_color = "#3a5a80"
-        text_color = "#333333"
-        highlight_color = "#e6f2ff"
-        
-        # Configure styles
+        accent_color = "#1976d2"
+        hover_color = "#1565c0"
+        text_color = "#222831"
+        highlight_color = "#e3f2fd"
+        border_color = "#b0bec5"
+        # Estilos generales
         self.style.configure('.', background=bg_color, foreground=text_color, font=self.normal_font)
         self.style.configure('TFrame', background=bg_color)
         self.style.configure('TLabelframe', background=frame_bg, foreground=text_color, 
-                            bordercolor="#cccccc", relief="solid", padding=10)
-        self.style.configure('TLabelframe.Label', background=frame_bg, foreground=text_color)
+                            bordercolor=border_color, relief="solid", padding=16, borderwidth=2)
+        self.style.configure('TLabelframe.Label', background=frame_bg, foreground=accent_color, font=self.title_font)
         self.style.configure('TLabel', background=frame_bg, foreground=text_color)
-        self.style.configure('TButton', background="#e0e0e0", foreground=text_color, 
-                            borderwidth=1, relief="solid", padding=6)
+        self.style.configure('TButton', background="#e3f2fd", foreground=accent_color, 
+                            borderwidth=0, relief="flat", padding=8, font=self.normal_font)
         self.style.map('TButton', 
-                      background=[('active', '#d0d0d0')],
+                      background=[('active', highlight_color), ('pressed', hover_color)],
+                      foreground=[('active', accent_color), ('pressed', 'white')],
                       relief=[('pressed', 'sunken')])
-        self.style.configure('Accent.TButton', background=accent_color, foreground="white")
+        self.style.configure('Accent.TButton', background=accent_color, foreground="white", borderwidth=0, relief="flat", padding=8, font=self.normal_font)
         self.style.map('Accent.TButton',
-                      background=[('active', hover_color)],
-                      foreground=[('active', 'white')])
+                      background=[('active', hover_color), ('pressed', hover_color)],
+                      foreground=[('active', 'white'), ('pressed', 'white')])
         self.style.configure('TEntry', fieldbackground="white", foreground=text_color, 
-                           bordercolor="#cccccc", lightcolor="#cccccc", 
-                           padding=5, relief="solid")
+                           bordercolor=border_color, lightcolor=border_color, 
+                           padding=6, relief="flat")
         self.style.configure('Treeview', background="white", foreground=text_color, 
-                           fieldbackground="white", rowheight=25, bordercolor="#dddddd")
-        self.style.configure('Treeview.Heading', background="#e0e0e0", foreground=text_color, 
-                            font=Font(family="Segoe UI", size=10, weight="bold"), 
-                            relief="flat", padding=5)
+                           fieldbackground="white", rowheight=28, bordercolor=border_color, font=self.normal_font)
+        self.style.configure('Treeview.Heading', background="#e3f2fd", foreground=accent_color, 
+                            font=self.title_font, relief="flat", padding=8)
         self.style.map('Treeview', background=[('selected', highlight_color)])
-        self.style.configure('Vertical.TScrollbar', background="#e0e0e0", bordercolor="#cccccc", 
-                            arrowcolor=text_color, relief="solid")
-        self.style.configure('Horizontal.TScrollbar', background="#e0e0e0", bordercolor="#cccccc", 
-                            arrowcolor=text_color, relief="solid")
-        self.style.configure('TCheckbutton', background=frame_bg, foreground=text_color)
-        self.style.configure('TRadiobutton', background=frame_bg, foreground=text_color)
+        self.style.configure('Vertical.TScrollbar', background="#e3f2fd", bordercolor=border_color, 
+                            arrowcolor=accent_color, relief="flat")
+        self.style.configure('Horizontal.TScrollbar', background="#e3f2fd", bordercolor=border_color, 
+                            arrowcolor=accent_color, relief="flat")
+        self.style.configure('TCheckbutton', background=frame_bg, foreground=accent_color, font=self.normal_font)
+        self.style.configure('TRadiobutton', background=frame_bg, foreground=accent_color, font=self.normal_font)
 
     def create_widgets(self):
         # Main container
         main_frame = ttk.Frame(self)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=6)
+
         # Top section - Search and Shows
         top_frame = ttk.Frame(main_frame)
-        top_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
+        top_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
+
         # Left panel - TV Shows
         shows_frame = ttk.LabelFrame(top_frame, text=" Buscar Series de TV ", style='TLabelframe')
-        shows_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-        
+        shows_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6), ipadx=3, ipady=3)
+
         # Search bar
         search_frame = ttk.Frame(shows_frame)
-        search_frame.pack(fill=tk.X, pady=(0, 10))
-        
+        search_frame.pack(fill=tk.X, pady=(0, 4))
+
         self.search_entry = ttk.Entry(search_frame, font=self.normal_font)
-        self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
-        
-        search_btn = ttk.Button(search_frame, text="Buscar", command=self.search_shows)
-        search_btn.pack(side=tk.LEFT)
-        
+        self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 3), ipady=1)
+
+        search_btn = ttk.Button(search_frame, text="Buscar", command=self.search_shows, style='Accent.TButton')
+        search_btn.pack(side=tk.LEFT, ipadx=3, ipady=1)
+
         # Shows list with scrollbar
         list_container = ttk.Frame(shows_frame)
         list_container.pack(fill=tk.BOTH, expand=True)
-        
+
         scroll_y = ttk.Scrollbar(list_container)
         scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
-        
+
         self.shows_listbox = tk.Listbox(
             list_container, 
             bg="white", 
-            fg="#333333", 
+            fg="#222831", 
             font=self.normal_font, 
-            selectbackground="#4a6fa5", 
+            selectbackground="#1976d2", 
             selectforeground="white",
             activestyle="none",
-            borderwidth=1,
-            relief="solid",
+            borderwidth=0,
+            relief="flat",
             highlightthickness=0,
             yscrollcommand=scroll_y.set
         )
-        self.shows_listbox.pack(fill=tk.BOTH, expand=True)
+        self.shows_listbox.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
         scroll_y.config(command=self.shows_listbox.yview)
         self.shows_listbox.bind("<<ListboxSelect>>", self.on_show_select)
-        
+
         # Buttons below shows list
         btn_frame = ttk.Frame(shows_frame)
-        btn_frame.pack(fill=tk.X, pady=(10, 0))
-        
-        ttk.Button(btn_frame, text="Títulos en Español", command=self.force_spanish).pack(side=tk.LEFT, padx=2)
-        ttk.Button(btn_frame, text="Obtener Episodios", command=self.get_episodes_btn).pack(side=tk.LEFT, padx=2)
-        
+        btn_frame.pack(fill=tk.X, pady=(2, 0))
+
+        ttk.Button(btn_frame, text="Títulos en Español", command=self.force_spanish).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+        ttk.Button(btn_frame, text="Obtener Episodios", command=self.get_episodes_btn).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+
         # Middle panel - Episodes
         episodes_frame = ttk.LabelFrame(top_frame, text=" Episodios ", style='TLabelframe')
-        episodes_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
-        
+        episodes_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 6), ipadx=3, ipady=3)
+
         # Episodes treeview with scrollbars
         tree_container = ttk.Frame(episodes_frame)
         tree_container.pack(fill=tk.BOTH, expand=True)
-        
+
         scroll_y = ttk.Scrollbar(tree_container)
         scroll_x = ttk.Scrollbar(tree_container, orient=tk.HORIZONTAL)
         scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
         scroll_x.pack(side=tk.BOTTOM, fill=tk.X)
-        
+
         self.episodes_tree = ttk.Treeview(
             tree_container, 
             columns=("Temporada", "Episodio", "Título"), 
@@ -382,134 +384,134 @@ class Renamizer(tk.Tk):
             yscrollcommand=scroll_y.set,
             xscrollcommand=scroll_x.set
         )
-        self.episodes_tree.pack(fill=tk.BOTH, expand=True)
-        
+        self.episodes_tree.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+
         scroll_y.config(command=self.episodes_tree.yview)
         scroll_x.config(command=self.episodes_tree.xview)
-        
+
         self.episodes_tree.heading("Temporada", text="Temporada")
         self.episodes_tree.heading("Episodio", text="Episodio")
         self.episodes_tree.heading("Título", text="Título")
-        self.episodes_tree.column("Temporada", width=80, anchor="center")
-        self.episodes_tree.column("Episodio", width=80, anchor="center")
-        self.episodes_tree.column("Título", width=300)
+        self.episodes_tree.column("Temporada", width=60, anchor="center")
+        self.episodes_tree.column("Episodio", width=60, anchor="center")
+        self.episodes_tree.column("Título", width=180)
         self.episodes_tree.bind("<Double-1>", self.add_episode)
-        
+
         # Order options
         order_frame = ttk.Frame(episodes_frame)
-        order_frame.pack(fill=tk.X, pady=(10, 0))
-        
-        ttk.Label(order_frame, text="Ordenar:").pack(side=tk.LEFT)
-        ttk.Radiobutton(order_frame, text="Por emisión").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(order_frame, text="DVD").pack(side=tk.LEFT, padx=5)
-        ttk.Radiobutton(order_frame, text="Continuo").pack(side=tk.LEFT, padx=5)
-        
+        order_frame.pack(fill=tk.X, pady=(2, 0))
+
+        ttk.Label(order_frame, text="Ordenar:").pack(side=tk.LEFT, padx=(0, 2))
+        ttk.Radiobutton(order_frame, text="Por emisión").pack(side=tk.LEFT, padx=2)
+        ttk.Radiobutton(order_frame, text="DVD").pack(side=tk.LEFT, padx=2)
+        ttk.Radiobutton(order_frame, text="Continuo").pack(side=tk.LEFT, padx=2)
+
         # Right panels container
         right_panels = ttk.Frame(top_frame)
         right_panels.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
+
         # Selected Episodes panel
         selected_episodes_frame = ttk.LabelFrame(right_panels, text=" Episodios Seleccionados ", style='TLabelframe')
-        selected_episodes_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
-        
+        selected_episodes_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 4), ipadx=3, ipady=3)
+
         btn_frame = ttk.Frame(selected_episodes_frame)
-        btn_frame.pack(fill=tk.X, pady=(0, 5))
-        
-        ttk.Button(btn_frame, text="Añadir Episodios", command=self.add_selected_episodes).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
-        ttk.Button(btn_frame, text="Ordenar Episodios", command=self.sort_episodes).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
-        
+        btn_frame.pack(fill=tk.X, pady=(0, 2))
+
+        ttk.Button(btn_frame, text="Añadir Episodios", command=self.add_selected_episodes).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+        ttk.Button(btn_frame, text="Ordenar Episodios", command=self.sort_episodes).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+
         tree_container = ttk.Frame(selected_episodes_frame)
         tree_container.pack(fill=tk.BOTH, expand=True)
-        
+
         scroll_y = ttk.Scrollbar(tree_container)
         scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
-        
+
         self.selected_episodes_tree = ttk.Treeview(
             tree_container, 
             columns=("Episodio",), 
             show="headings",
             yscrollcommand=scroll_y.set
         )
-        self.selected_episodes_tree.pack(fill=tk.BOTH, expand=True)
+        self.selected_episodes_tree.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
         scroll_y.config(command=self.selected_episodes_tree.yview)
-        
+
         self.selected_episodes_tree.heading("Episodio", text="Episodios Seleccionados")
-        self.selected_episodes_tree.column("Episodio", width=400)
-        
+        self.selected_episodes_tree.column("Episodio", width=180)
+
         # Selected Files panel
         selected_files_frame = ttk.LabelFrame(right_panels, text=" Archivos Seleccionados ", style='TLabelframe')
-        selected_files_frame.pack(fill=tk.BOTH, expand=True)
-        
+        selected_files_frame.pack(fill=tk.BOTH, expand=True, ipadx=3, ipady=3)
+
         btn_frame = ttk.Frame(selected_files_frame)
-        btn_frame.pack(fill=tk.X, pady=(0, 5))
-        
-        ttk.Button(btn_frame, text="Añadir Archivos", command=self.add_files).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
-        ttk.Button(btn_frame, text="Añadir Carpetas", command=self.add_dirs).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
-        ttk.Button(btn_frame, text="Ordenar Archivos", command=self.sort_files).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
-        
+        btn_frame.pack(fill=tk.X, pady=(0, 2))
+
+        ttk.Button(btn_frame, text="Añadir Archivos", command=self.add_files).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+        ttk.Button(btn_frame, text="Añadir Carpetas", command=self.add_dirs).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+        ttk.Button(btn_frame, text="Ordenar Archivos", command=self.sort_files).pack(side=tk.LEFT, fill=tk.X, expand=True, padx=1, ipadx=1, ipady=1)
+
         tree_container = ttk.Frame(selected_files_frame)
         tree_container.pack(fill=tk.BOTH, expand=True)
-        
+
         scroll_y = ttk.Scrollbar(tree_container)
         scroll_y.pack(side=tk.RIGHT, fill=tk.Y)
-        
+
         self.selected_files_tree = ttk.Treeview(
             tree_container, 
             columns=("Archivo",), 
             show="headings",
             yscrollcommand=scroll_y.set
         )
-        self.selected_files_tree.pack(fill=tk.BOTH, expand=True)
+        self.selected_files_tree.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
         scroll_y.config(command=self.selected_files_tree.yview)
-        
+
         self.selected_files_tree.heading("Archivo", text="Archivos Seleccionados")
-        self.selected_files_tree.column("Archivo", width=400)
-        
+        self.selected_files_tree.column("Archivo", width=180)
+
         # Bottom section - Output and actions
         bottom_frame = ttk.Frame(main_frame)
-        bottom_frame.pack(fill=tk.X, pady=(10, 0))
+        bottom_frame.pack(fill=tk.X, pady=(4, 0))
 
         # Output directory
         output_frame = ttk.LabelFrame(bottom_frame, text=" Directorio de Salida ", style='TLabelframe')
-        output_frame.pack(fill=tk.X, pady=(0, 10))
+        output_frame.pack(fill=tk.X, pady=(0, 2), ipadx=3, ipady=3)
 
         self.output_dir_label = ttk.Label(output_frame, text="No seleccionado", font=self.small_font)
-        self.output_dir_label.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        self.output_dir_label.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=3)
 
-        ttk.Button(output_frame, text="Seleccionar Directorio", command=self.select_output_dir).pack(side=tk.RIGHT, padx=2)
-        ttk.Button(output_frame, text="Renombrar Archivos", command=self.rename_files, style='Accent.TButton').pack(side=tk.RIGHT, padx=2)
+        ttk.Button(output_frame, text="Seleccionar Directorio", command=self.select_output_dir, style='TButton').pack(side=tk.RIGHT, padx=1, ipadx=3, ipady=1)
+        ttk.Button(output_frame, text="Renombrar Archivos", command=self.rename_files, style='Accent.TButton').pack(side=tk.RIGHT, padx=1, ipadx=3, ipady=1)
 
         # --- AQUI VA EL LOGO ---
         logo_frame = ttk.Frame(bottom_frame)
-        logo_frame.pack(side=tk.LEFT, anchor="s", padx=(0, 10))
+        logo_frame.pack(side=tk.LEFT, anchor="sw", padx=(0, 6), pady=(0, 2))
         try:
             if self.logo_app_img:
                 logo_label = ttk.Label(logo_frame, image=self.logo_app_img)
-                logo_label.pack()
+                logo_label.pack(pady=(2, 0))
         except Exception:
             pass
 
         # Action buttons
         action_frame = ttk.Frame(bottom_frame)
-        action_frame.pack(fill=tk.X)
+        action_frame.pack(fill=tk.X, pady=(2, 0))
 
         # Left side buttons
         left_btn_frame = ttk.Frame(action_frame)
         left_btn_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        ttk.Button(left_btn_frame, text="Salir", command=self.quit).pack(side=tk.LEFT, padx=2)
-        ttk.Button(left_btn_frame, text="Acerca de", command=self.about).pack(side=tk.LEFT, padx=2)
-        ttk.Button(left_btn_frame, text="Sitio Web", command=self.website).pack(side=tk.LEFT, padx=2)
-        ttk.Button(left_btn_frame, text="Exportar", command=self.export).pack(side=tk.LEFT, padx=2)
-        ttk.Button(left_btn_frame, text="Configuración", command=self.open_preferences).pack(side=tk.LEFT, padx=2)
-        ttk.Button(left_btn_frame, text="Forzar Actualización", command=self.force_refresh).pack(side=tk.LEFT, padx=2)
-        
+
+        ttk.Button(left_btn_frame, text="Salir", command=self.quit).pack(side=tk.LEFT, padx=2, ipadx=3, ipady=1)
+        ttk.Button(left_btn_frame, text="Acerca de", command=self.about).pack(side=tk.LEFT, padx=2, ipadx=3, ipady=1)
+        ttk.Button(left_btn_frame, text="Sitio Web", command=self.website).pack(side=tk.LEFT, padx=2, ipadx=3, ipady=1)
+        ttk.Button(left_btn_frame, text="Exportar", command=self.export).pack(side=tk.LEFT, padx=2, ipadx=3, ipady=1)
+        ttk.Button(left_btn_frame, text="Configuración", command=self.open_preferences).pack(side=tk.LEFT, padx=2, ipadx=3, ipady=1)
+        ttk.Button(left_btn_frame, text="Forzar Actualización", command=self.force_refresh).pack(side=tk.LEFT, padx=2, ipadx=3, ipady=1)
+
         # Right side buttons
         right_btn_frame = ttk.Frame(action_frame)
         right_btn_frame.pack(side=tk.RIGHT, fill=tk.X)
-        
-        ttk.Button(right_btn_frame, text="Limpiar Listas", command=self.clear_lists).pack(side=tk.RIGHT, padx=2)
-        ttk.Button(right_btn_frame, text="Eliminar Todo", command=self.clear_all).pack(side=tk.RIGHT, padx=2)
+
+        ttk.Button(right_btn_frame, text="Limpiar Listas", command=self.clear_lists).pack(side=tk.RIGHT, padx=2, ipadx=3, ipady=1)
+        ttk.Button(right_btn_frame, text="Eliminar Todo", command=self.clear_all).pack(side=tk.RIGHT, padx=2, ipadx=3, ipady=1)
 
     def search_shows(self):
         query = self.search_entry.get()
@@ -535,7 +537,7 @@ class Renamizer(tk.Tk):
             values = self.episodes_tree.item(item, "values")
             if values not in self.selected_episodes:
                 self.selected_episodes.append(values)
-                self.selected_episodes_tree.insert("", tk.END, values=(f"T{values[0]}E{values[1]} - {values[2]}"))
+                self.selected_episodes_tree.insert("", tk.END, values=(f"T{values[0]}E{values[1]} - {values[2]}",))
 
     def add_selected_episodes(self):
         self.add_episode(None)
@@ -544,14 +546,14 @@ class Renamizer(tk.Tk):
         self.selected_episodes.sort(key=lambda x: (int(x[0]), int(x[1])))
         self.selected_episodes_tree.delete(*self.selected_episodes_tree.get_children())
         for values in self.selected_episodes:
-            self.selected_episodes_tree.insert("", tk.END, values=(f"T{values[0]}E{values[1]} - {values[2]}"))
+            self.selected_episodes_tree.insert("", tk.END, values=(f"T{values[0]}E{values[1]} - {values[2]}",))
 
     def add_files(self):
         files = filedialog.askopenfilenames(filetypes=[("Archivos de Video", "*.mp4 *.mkv *.avi")])
         for file in files:
             if file not in self.selected_files:
                 self.selected_files.append(file)
-                self.selected_files_tree.insert("", tk.END, values=(os.path.basename(file)))
+                self.selected_files_tree.insert("", tk.END, values=(os.path.basename(file),))
 
     def add_dirs(self):
         dir_path = filedialog.askdirectory()
@@ -562,7 +564,7 @@ class Renamizer(tk.Tk):
                         full_path = os.path.join(root, file)
                         if full_path not in self.selected_files:
                             self.selected_files.append(full_path)
-                            self.selected_files_tree.insert("", tk.END, values=(os.path.basename(full_path)))
+                            self.selected_files_tree.insert("", tk.END, values=(os.path.basename(full_path),))
 
     def sort_files(self):
         self.selected_files.sort()
@@ -581,15 +583,15 @@ class Renamizer(tk.Tk):
 
     def rename_files(self):
         if not self.output_dir:
-            messagebox.showerror("Error", "Por favor, selecciona un directorio de salida.")
+            messagebox.showerror("Error de directorio", "Por favor, selecciona un directorio de salida.")
             return
         if len(self.selected_episodes) != len(self.selected_files):
-            messagebox.showerror("Error", "El número de episodios y archivos debe coincidir.")
+            messagebox.showerror("Error de coincidencia", "El número de episodios y archivos debe coincidir.")
             return
         for i, (episode, file) in enumerate(zip(self.selected_episodes, self.selected_files)):
             show_index = self.shows_listbox.curselection()
             if not show_index:
-                messagebox.showerror("Error", "No se ha seleccionado ninguna serie.")
+                messagebox.showerror("Error de selección", "No se ha seleccionado ninguna serie.")
                 return
             show = self.shows[show_index[0]]
             show_name = show[1]
@@ -609,26 +611,29 @@ class Renamizer(tk.Tk):
             try:
                 os.rename(file, new_path)
             except OSError as e:
-                messagebox.showerror("Error", f"No se pudo renombrar {file}: {e}")
-        messagebox.showinfo("Éxito", "¡Archivos renombrados con éxito! Vuelve a escanear tu biblioteca de Plex para actualizar.")
+                messagebox.showerror("Error al renombrar", f"No se pudo renombrar {file}: {e}")
+        messagebox.showinfo(
+            "¡Éxito!",
+            "¡Archivos renombrados con éxito!\n\nVuelve a escanear tu biblioteca de Plex para actualizar."
+        )
         self.clear_lists()
 
     def open_preferences(self):
         pref_window = tk.Toplevel(self)
         pref_window.title("Configuración")
         pref_window.geometry("400x200")
-        pref_window.configure(bg="#f0f0f0")
-        
+        pref_window.configure(bg="#f7fafd")
+
         content_frame = ttk.Frame(pref_window)
-        content_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        ttk.Label(content_frame, text="Incluir Título del Episodio en el Nombre:", font=self.normal_font).pack(pady=10)
-        ttk.Checkbutton(content_frame, text="Habilitar", variable=self.include_episode_title).pack(pady=5)
-        
+        content_frame.pack(fill=tk.BOTH, expand=True, padx=32, pady=28)
+
+        ttk.Label(content_frame, text="Incluir Título del Episodio en el Nombre:", font=self.normal_font).pack(pady=14)
+        ttk.Checkbutton(content_frame, text="Habilitar", variable=self.include_episode_title, style='TCheckbutton').pack(pady=8)
+
         btn_frame = ttk.Frame(content_frame)
-        btn_frame.pack(fill=tk.X, pady=10)
-        
-        ttk.Button(btn_frame, text="Guardar", command=pref_window.destroy, style='Accent.TButton').pack(pady=5)
+        btn_frame.pack(fill=tk.X, pady=18)
+
+        ttk.Button(btn_frame, text="Guardar", command=pref_window.destroy, style='Accent.TButton').pack(pady=6, ipadx=12, ipady=4)
 
     def force_spanish(self):
         selection = self.shows_listbox.curselection()
@@ -651,14 +656,20 @@ class Renamizer(tk.Tk):
         self.on_show_select(None)
 
     def about(self):
-        messagebox.showinfo("Acerca de", "Renombrador de Series de TV para Plex\nPor Paco López\nVersión 1.0\n\nEsta aplicación te ayuda a renombrar episodios de series de TV para compatibilidad con Plex.\nUtiliza las APIs de TVMaze y TMDB para obtener datos de series y episodios.")
+        messagebox.showinfo(
+            "Acerca de Renamizer",
+            "\nRenombrador de Series de TV para Plex\n\nPor Paco López\nVersión 1.0\n\nEsta aplicación te ayuda a renombrar episodios de series de TV para compatibilidad con Plex.\nUtiliza las APIs de TVMaze y TMDB para obtener datos de series y episodios.\n"
+        )
 
     def website(self):
         import webbrowser
         webbrowser.open("https://github.com/Fralopala2/Renamizer")
 
     def export(self):
-        messagebox.showinfo("Exportar", "La funcionalidad de exportación no está implementada aún.")
+        messagebox.showinfo(
+            "Exportar",
+            "La funcionalidad de exportación no está implementada aún.\n\n¡Próximamente podrás exportar tus listas y configuraciones!"
+        )
 
     def force_refresh(self):
         selection = self.shows_listbox.curselection()
@@ -669,7 +680,10 @@ class Renamizer(tk.Tk):
         cursor.execute("DELETE FROM shows WHERE id = ? AND source = ?", (show[0], show[4]))
         cursor.execute("DELETE FROM episodes WHERE show_id = ? AND source = ?", (show[0], show[4]))
         conn.commit()
-        messagebox.showinfo("Caché", "Caché limpiado para la serie seleccionada. Por favor, busca de nuevo.")
+        messagebox.showinfo(
+            "Caché limpiado",
+            "Caché limpiado para la serie seleccionada.\n\nPor favor, realiza una nueva búsqueda para actualizar los datos."
+        )
 
     def clear_lists(self):
         self.selected_episodes_tree.delete(*self.selected_episodes_tree.get_children())
